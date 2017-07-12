@@ -1,0 +1,66 @@
+#!/bin/bash
+
+mageConfig() {
+cat <<EOF > /root/.n98-magerun.yaml
+commands:
+  N98\Magento\Command\Installer\InstallCommand:
+    installation:
+      defaults:
+        locale: "$MAGE_LOCALE"
+        timezone: "$MAGENTO_TZ"
+        currency: "$MAGE_CURRENCY"
+        use_secure: "$MAGE_SECURE"
+        admin_username: "$MAGE_ADMIN_USERNAME"
+        admin_firstname: "$MAGE_ADMIN_FIRSTNAME"
+        admin_lastname: "$MAGE_ADMIN_LASTNAME"
+        admin_password: "$MAGE_ADMIN_PASSWORD"
+        admin_email: "$MAGE_ADMIN_EMAIL"
+
+    magento-packages:
+      - name: magento-ce-1.9.3.3
+        version: 1.9.3.3
+        dist:
+          url: https://github.com/OpenMage/magento-mirror/archive/1.9.3.3.zip
+          type: zip
+          shasum: f613968e1ea667ec1a0f0198b7c1d319e2598580
+        extra:
+          sample-data: sample-data-1.9.2.4
+EOF
+}
+
+mageInstall() {
+    magerun install\
+        --skip-root-check\
+        --magentoVersion="magento-ce-1.9.3.3"\
+        --installationFolder="."\
+	--dbHost="$MYSQL_HOST"\
+	--dbUser="root"\
+	--dbPass="$MYSQL_ROOT_PASSWORD"\
+	--dbName="$HOSTNAME"\
+	--installSampleData="yes"\
+	--useDefaultConfigParams="yes"\
+	--baseUrl="http://$VIRTUAL_HOST/"\
+	--replaceHtaccessFile="yes"
+}
+
+mageConfig
+if ! mageInstall
+then
+	echo "Something goes wrong. Exit."
+else
+cat <<EOF
+======================
+
+http://$VIRTUAL_HOST/admin
+
+user: 	"$MAGE_ADMIN_USERNAME"
+pass: 	"$MAGE_ADMIN_PASSWORD"
+
+db user:  root
+db pass:  $MYSQL_ROOT_PASSWORD
+
+======================
+EOF
+fi
+
+exit 0

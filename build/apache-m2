@@ -1,0 +1,29 @@
+FROM php:5-apache
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libxml2-dev \
+    libmcrypt-dev \
+    libpng-dev \
+    libz-dev \
+    libjpeg-dev \
+    libicu-dev
+
+RUN docker-php-ext-configure gd --with-jpeg-dir=/usr/include
+RUN docker-php-ext-install \
+    pdo_mysql \
+    mcrypt \
+    gd \
+    soap \
+    zip \
+    opcache
+
+RUN pecl install intl && \
+    docker-php-ext-enable intl
+
+RUN echo "memory_limit = 1024M\nalways_populate_raw_post_data=-1" > /usr/local/etc/php/conf.d/php.ini
+RUN a2enmod rewrite
+
+ADD https://files.magerun.net/n98-magerun.phar /usr/local/bin/magerun
+
+COPY ./scripts/* /usr/local/bin/
+RUN chmod +x /usr/local/bin/*
